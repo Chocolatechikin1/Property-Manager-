@@ -1,6 +1,7 @@
 // backend/server.ts
 import express from 'express';
-import type { Request, Response } from 'express';
+//import type { Request, Response } from 'express';
+import type { Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import sqlite3 from 'sqlite3';
 import cors from 'cors';
 
@@ -16,7 +17,7 @@ interface Property {
     id?: number;
     address: string;
     tenant_name: string;
-    rent_received: number; // SQLite uses 0/1 for booleans
+    rent_received: number; //boolean represented as 0 or 1
     notes: string;
 }
 
@@ -32,11 +33,10 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         address TEXT,
         tenant_name TEXT,
-        rent_received BOOLEAN,
+        rent_received INTEGER, // 0 or 1
         notes TEXT
     )`);
 
-    // Insert sample data if the table is empty
     db.get("SELECT COUNT(*) AS count FROM properties", (err: Error | null, row: { count: number }) => {
         if (row && row.count === 0) {
             const stmt = db.prepare("INSERT INTO properties (address, tenant_name, rent_received, notes) VALUES (?, ?, ?, ?)");
@@ -47,10 +47,10 @@ db.serialize(() => {
     });
 });
 
-// API Routes
+// --- API ROUTES ---
 
 // GET: Fetch all properties
-app.get('/api/properties', (req: Request, res: Response) => {
+app.get('/api/properties', (req: ExpressRequest, res: ExpressResponse) => {
     db.all("SELECT * FROM properties", [], (err: Error | null, rows: Property[]) => {
         if (err) {
             res.status(500).json({ error: err.message });
@@ -60,8 +60,26 @@ app.get('/api/properties', (req: Request, res: Response) => {
     });
 });
 
+// POST: Add a new property
+app.post('/api/properties', (req: ExpressRequest, res: ExpressResponse) => {
+    const { address, tenant_name, notes }: Partial<Property> = req.body;
+    
+    db.run(
+        `INSERT INTO properties (address, tenant_name, rent_received, notes) VALUES (?, ?, ?, ?)`,
+        [address, tenant_name, 0, notes || ''], // Default rent_received to 0 (false)
+        function (this: sqlite3.RunResult, err: Error | null) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            // Return the auto-generated ID so the frontend can use it immediately
+            res.json({ id: this.lastID, message: 'Property added successfully' });
+        }
+    );
+});
+
 // PATCH: Update a property (rent status or notes)
-app.patch('/api/properties/:id', (req: Request, res: Response) => {
+app.patch('/api/properties/:id', (req: ExpressRequest, res: ExpressResponse) => {
     const { rent_received, notes }: Partial<Property> = req.body;
     const { id } = req.params;
 
@@ -74,6 +92,23 @@ app.patch('/api/properties/:id', (req: Request, res: Response) => {
                 return;
             }
             res.json({ message: 'Property updated successfully', changes: this.changes });
+        }
+    );
+});
+
+// DELETE: Remove a property
+app.delete('/api/properties/:id', (req: ExpressRequest, res: ExpressResponse) => {
+    const { id } = req.params;
+
+    db.run(
+        `DELETE FROM properties WHERE id = ?`,
+        id,
+        function (this: sqlite3.RunResult, err: Error | null) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            res.json({ message: 'Property deleted successfully', changes: this.changes });
         }
     );
 });
