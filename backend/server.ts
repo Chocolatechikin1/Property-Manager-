@@ -1,5 +1,6 @@
 // backend/server.ts
-import express, { Request, Response } from 'express';
+import express from 'express';
+import type { Request, Response } from 'express';
 import sqlite3 from 'sqlite3';
 import cors from 'cors';
 

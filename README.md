@@ -13,7 +13,8 @@ To initialize, you need 2 terminals open at the same time
 ### Terminal 1
 
 cd backend
-npx ts-node server.ts
+npm install -D tsx (only need this first run)
+npx tsx server.ts
 
 ### Terminal 2
 
