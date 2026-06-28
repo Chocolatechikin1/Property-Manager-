@@ -13,10 +13,13 @@ To initialize, you need 2 terminals open at the same time
 ### Terminal 1
 
 cd backend
+
 npm install -D tsx (only need this first run)
+
 npx tsx server.ts
 
 ### Terminal 2
 
 cd frontend 
+
 npm run dev
