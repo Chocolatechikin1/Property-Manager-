@@ -5,13 +5,18 @@ Simple site meant to be hosted on a local device (no online connection needed) B
 Frontend: React Backend: Node.js Database: SQLite
 
 Features: 
+
 =View list of properties
+
 =Tenant Name 
+
 =Rent received 
+
 =toggle Notes
+
 =add/remove/archive properties
 
-### Startup
+## Startup
 
 To initialize, you need 2 terminals open at the same time
 
